@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "trailhub",
+    "slug": "trailhub",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.gabfur123.trailhub"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+    "firebaseApiKey": "AIzaSyD_Ps_jLYkn_My6Dx4i6ALB3RWM2X-Qtx8",
+    "firebaseAuthDomain": "trailhub-9377e.firebaseapp.com",
+    "firebaseProjectId": "trailhub-9377e",
+    "firebaseStorageBucket": "trailhub-9377e.firebasestorage.app",
+    "firebaseMessagingSenderId": "262437441302",
+    "firebaseAppId": "1:262437441302:web:142cfb1745fd210720ca37",
+    "eas": {
+      "projectId": "a5907658-ec8d-4213-98f3-127a810cffe3"
+  }
+}
+  }
+}

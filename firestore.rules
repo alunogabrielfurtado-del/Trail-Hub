@@ -1,0 +1,81 @@
+// firestore.rules
+//
+// CORREÇÃO APLICADA:
+// [BUG FIX] ehAdmin() reescrita para usar request.auth.token.role (Custom Claim)
+//           no lugar de get() no documento do usuário.
+//
+//           ANTES: get(/databases/.../users/$(uid)).data.role == "admin"
+//           → fazia uma leitura extra no Firestore a cada operação, sujeita
+//             a falhas silenciosas de cota/permissão que bloqueavam delete.
+//
+//           DEPOIS: request.auth.token.role == "admin"
+//           → lê direto do token JWT, zero leituras extras, nunca falha.
+//
+// DEPLOY: firebase deploy --only firestore:rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── FUNÇÕES AUXILIARES ────────────────────────────────────────────────
+
+    function estaAutenticado() {
+      return request.auth != null;
+    }
+
+    function ehProprioUsuario(userId) {
+      return estaAutenticado() && request.auth.uid == userId;
+    }
+
+    // ✅ BUG FIX: role lida do Custom Claim do token JWT — sem get() extra.
+    // Pré-requisito: Cloud Function syncRoleClaim em deploy (functions/index.js).
+    function ehAdmin() {
+      return estaAutenticado()
+        && request.auth.token.role == "admin";
+    }
+
+    // ── USUÁRIOS ──────────────────────────────────────────────────────────
+
+    match /users/{userId} {
+      allow read:   if ehProprioUsuario(userId) || ehAdmin();
+      allow create: if ehProprioUsuario(userId);
+      allow update: if ehProprioUsuario(userId)
+                    && !request.resource.data.keys().hasAny(["role"]);
+      allow delete: if false;
+    }
+
+    // ── TRILHAS ───────────────────────────────────────────────────────────
+
+    match /trilhas/{trilhaId} {
+      allow read:   if true;
+      allow create: if ehAdmin()
+                    && request.resource.data.keys().hasAll(["nome","nivel","local","ativo"]);
+      allow update: if ehAdmin();
+      allow delete: if ehAdmin();
+    }
+
+    // ── RESERVAS ──────────────────────────────────────────────────────────
+
+    match /reservas/{reservaId} {
+      allow read:   if ehAdmin()
+                    || (estaAutenticado() && resource.data.userId == request.auth.uid);
+      allow create: if estaAutenticado()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.keys().hasAll(["userId","trilha","data","horario","pessoas","status"]);
+      allow update: if false;
+      allow delete: if ehAdmin()
+                    || (estaAutenticado() && resource.data.userId == request.auth.uid);
+    }
+
+    // ── MENSAGENS ─────────────────────────────────────────────────────────
+
+    match /mensagens/{mensagemId} {
+      allow create: if estaAutenticado()
+                    && request.resource.data.keys().hasAll(["nome","email","assunto","mensagem"]);
+      allow read:   if ehAdmin();
+      allow update: if ehAdmin();
+      allow delete: if ehAdmin();
+    }
+
+  }
+}
